@@ -1,0 +1,22 @@
+{
+  "name": "memcached-example",
+  "version": "1.0.0",
+  "description": "Exemplo mínimo de uso do Memcached",
+  "main": "index.js",
+  "scripts": {
+    "docker:up": "docker-compose up -d --build",
+    "docker:down": "docker-compose down",
+    "docker:clean": "node clean-all-containers.js",
+    "docker:logs": "docker-compose logs -f",
+    "docker:logs:app": "docker-compose logs -f app",
+    "docker:logs:db": "docker-compose logs -f postgres",
+    "docker:stats": "docker stats memcached1 memcached2 memcached3 postgres_db cache_demo_app",
+    "db:connect": "docker exec -it postgres_db psql -U admin -d myapp",
+    "memcached:connect": "docker exec -it memcached1 sh",
+    "add-memcached": "node add-memcached-server.js",
+    "remove-memcached": "node remove-memcached-server.js"
+  },
+  "keywords": ["memcached", "cache", "example"],
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: myapp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d myapp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  memcached1:
+    image: memcached:1.6-alpine
+    container_name: memcached1
+    command: memcached -m 64
+    ports:
+      - "11211:11211"
+    networks:
+      - app-network
+
+  memcached2:
+    image: memcached:1.6-alpine
+    container_name: memcached2
+    command: memcached -m 64
+    networks:
+      - app-network
+
+  memcached3:
+    image: memcached:1.6-alpine
+    container_name: memcached3
+    command: memcached -m 64
+    networks:
+      - app-network
+
+  app:
+    build: ./app
+    container_name: cache_demo_app
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=admin
+      - DB_PASSWORD=admin123
+      - DB_NAME=myapp
+      - MEMCACHED_SERVERS=${MEMCACHED_SERVERS:-memcached1:11211,memcached2:11211,memcached3:11211}
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ./app:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      memcached1:
+        condition: service_started
+      memcached2:
+        condition: service_started
+      memcached3:
+        condition: service_started
+    networks:
+      - app-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
